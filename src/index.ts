@@ -124,11 +124,9 @@ app.post("/videos", async (req: Request, res: Response) => {
 
 app.put("/videos/:id", async (req: Request, res: Response) => {
   try {
+    //Recebendo valores da idToEdit e body
     const idToEdit = req.params.id
-    const id = req.body.id
-    const title = req.body.title
-    const duration = req.body.duration
-    const uploadedAt = req.body.uploadedAt
+    const {id, title,duration,uploadedAt} = req.body
 
     // Validando o campo 'id'
     if (id !== undefined) {
@@ -165,7 +163,7 @@ app.put("/videos/:id", async (req: Request, res: Response) => {
     // Instanciando um objeto da classe 'VideoDatabase'
     const videoDatabase = new VideoDatabase()
 
-    // Buscando o vídeo no banco de dados com o id fornecido via 
+    // Buscando o vídeo no banco de dados com o id fornecido via params
     const videoDB = await videoDatabase.findVideoById(idToEdit)
 
     // Verificando se o vídeo foi encontrado no banco de dados
@@ -218,7 +216,6 @@ app.put("/videos/:id", async (req: Request, res: Response) => {
     }
   }
 })
-
 
 app.delete("/videos/:id", async (req: Request, res: Response) => {
   try {
