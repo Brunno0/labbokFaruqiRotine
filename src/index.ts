@@ -18,11 +18,7 @@ const videoController = new VideosController()
 
 
 app.get("/ping", videoController.getPing)
-
 app.get("/videos", videoController.getVideos)
-
 app.post("/videos", videoController.createVideo)
-
 app.put("/videos/:id", videoController.updateVideo)
-
 app.delete("/videos/:id", videoController.deleteVideo)
