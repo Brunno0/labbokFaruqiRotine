@@ -2,6 +2,7 @@ import { throws } from "assert"
 import { VideoDatabase } from "../database/VideoDatabase"
 import { Video } from "../models/Video"
 import { TVideoDB } from "../types"
+import { BadRequestError } from "../errors/BadRequestError"
 
 export class VideoBusiness {
     getVideos =async (input:any) => {
@@ -27,15 +28,15 @@ export class VideoBusiness {
         const { id, title, duration } = input
 
         if (typeof id !== "string") {
-            throw new Error("'id' deve ser string")
+           throw new BadRequestError()
           }
       
           if (typeof title !== "string") {
-            throw new Error("'title' deve ser string")
+            throw new BadRequestError("'title'deve ser string")
           }
       
           if (typeof duration !== "number") {
-            throw new Error("'duration' deve ser number")
+            throw new BadRequestError()
           }
       
           const videoDatabase = new VideoDatabase()
@@ -43,7 +44,7 @@ export class VideoBusiness {
           const videoDBExists = await videoDatabase.findVideoById(id)
       
           if (videoDBExists) {
-             throw new Error("Vídeo já cadastrado")
+             throw new BadRequestError("Vídeo já cadastrado")
           }
       
           const newVideo = new Video(
