@@ -1,8 +1,9 @@
-import { throws } from "assert"
 import { VideoDatabase } from "../database/VideoDatabase"
 import { Video } from "../models/Video"
 import { TVideoDB } from "../types"
 import { BadRequestError } from "../errors/BadRequestError"
+import { CreateVideoInputDTO, CreateVideoOutputDTO } from "../dtos/createVideo.dto"
+import { EditVideoInputDTO, EditVideoOutputDTO } from "../dtos/editVideo.dto"
 
 export class VideoBusiness {
     getVideos =async (input:any) => {
@@ -23,24 +24,11 @@ export class VideoBusiness {
             return videos
 
     }
-    createVideo = async (input:any) => {
+    createVideo = async (input:CreateVideoInputDTO): Promise<CreateVideoOutputDTO> => {
 
         const { id, title, duration } = input
 
-        if (typeof id !== "string") {
-           throw new BadRequestError()
-          }
-      
-          if (typeof title !== "string") {
-            throw new BadRequestError("'title'deve ser string")
-          }
-      
-          if (typeof duration !== "number") {
-            throw new BadRequestError()
-          }
-      
           const videoDatabase = new VideoDatabase()
-      
           const videoDBExists = await videoDatabase.findVideoById(id)
       
           if (videoDBExists) {
@@ -63,48 +51,34 @@ export class VideoBusiness {
       
           await videoDatabase.insertVideo(newVideoDB)
 
-          const output ={
-            massage:"Cadastrado com sucesso"
+          // Formatamos o output do vídeo seguindo a assinatura do CreateVideoOutputDTO
+          const output: CreateVideoOutputDTO = {
+            message:"Cadastrado com sucesso",
+              video:{
+              id: newVideo.getId(),
+              title: newVideo.getTitle(),
+              duration: newVideo.getDuration(),
+            }
           }
 
           return output
 
     }
-    updateVideo = async (input:any, idToEdit:any)=>{
+    updateVideo = async (input: EditVideoInputDTO): Promise<EditVideoOutputDTO>=>{
            //Recebendo valores da idToEdit e body
-           const {id, title,duration,uploadedAt} = input
+           const {idToEdit,id, title,duration} = input
 
-            // Validando o campo 'id'
-           if (id !== undefined) {
-             if (typeof id !== "string") {
-            
-               throw new Error("'id' deve ser string")
-             }
-           }
-       
-           // Validando o campo 'title'
-           if (title !== undefined) {
-             if (typeof title !== "string") {
-             
-               throw new Error("'title' deve ser string")
-             }
-           }
-       
-           // Validando o campo 'duration'
-           if (duration !== undefined) {
-             if (typeof duration !== "number") {
-       
-               throw new Error("'duration' deve ser number")
-             }
-           }
-       
+           // Não faz sentido alterar a data de upload. Um vídeo não pode trocar data de up
+           // ou pode? por enquanto não. heheh 
+
            // Validando o campo 'uploadedAt'
-           if (uploadedAt !== undefined) {
-             if (typeof uploadedAt !== "string") {
+           //
+          //  if (uploadedAt !== undefined) {
+          //    if (typeof uploadedAt !== "string") {
       
-               throw new Error("'uploadedAt' deve ser string")
-             }
-           }
+          //      throw new Error("'uploadedAt' deve ser string")
+          //    }
+          //  }
        
            // Instanciando um objeto da classe 'VideoDatabase'
            const videoDatabase = new VideoDatabase()
@@ -129,10 +103,8 @@ export class VideoBusiness {
            id && video.setId(id)
            title && video.setTitle(title)
            duration && video.setDuration(duration)
-           uploadedAt && video.setUploadedAt(uploadedAt)
-            
-          
 
+              
            // Criando um objeto 'updatedVideoDB' com os dados atualizados do vídeo
            const updatedVideoDB: TVideoDB = {
              id: video.getId(),
@@ -144,9 +116,16 @@ export class VideoBusiness {
            // Atualizando as informações do vídeo no banco de dados
            await videoDatabase.updateVideo(idToEdit)
 
-           const output= {
+          
+           const output: EditVideoOutputDTO= {
+
             message: "Atuzalizado com sucesso",
-            video
+            video:{
+              id: video.getId(),
+              title: video.getTitle(),
+              duration: video.getDuration(),
+              uplodatedAt: video.getUploadedAt()
+            }
         }
 
             return output;

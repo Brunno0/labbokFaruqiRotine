@@ -10,7 +10,8 @@ app.use(express.json())
 app.listen(3003, () => {
   console.log(`Servidor rodando na porta ${3003}`)
 })
-app.use("videos", videoRouter)
+app.use("/videos", videoRouter)
+
 
 // app.get("/ping", videoController.getPing)
 // app.get("/videos", videoController.getVideos)
