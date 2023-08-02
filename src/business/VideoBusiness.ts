@@ -8,11 +8,17 @@ import { DeleteVideoInputDTO, DeleteVideoOutputDTO } from "../dtos/deleteVideo.d
 import { ReadVideoInputDTO, ReadVideoOutputDTO } from "../dtos/readVideo.dto"
 
 export class VideoBusiness {
-    getVideos =async (input:ReadVideoInputDTO) => {
+
+    constructor(
+      private videoDatabase = new VideoDatabase
+    ){}
+
+
+    getVideos = async (input:ReadVideoInputDTO) => {
         const {q} = input
    
-        const database = new VideoDatabase()
-        const videosDB = await database.findVideos(q)
+        
+        const videosDB = await this.videoDatabase.findVideos(q)
         
         const videos: Video[] = videosDB.map(
           (element) =>
@@ -35,8 +41,8 @@ export class VideoBusiness {
 
         const { id, title, duration } = input
 
-          const videoDatabase = new VideoDatabase()
-          const videoDBExists = await videoDatabase.findVideoById(id)
+        
+          const videoDBExists = await this.videoDatabase.findVideoById(id)
       
           if (videoDBExists) {
              throw new BadRequestError("Vídeo já cadastrado")
@@ -56,7 +62,7 @@ export class VideoBusiness {
             uploaded_at: newVideo.getUploadedAt()
           }
       
-          await videoDatabase.insertVideo(newVideoDB)
+          await this.videoDatabase.insertVideo(newVideoDB)
 
           // Formatamos o output do vídeo seguindo a assinatura do CreateVideoOutputDTO
           const output: CreateVideoOutputDTO = {
@@ -88,10 +94,9 @@ export class VideoBusiness {
           //  }
        
            // Instanciando um objeto da classe 'VideoDatabase'
-           const videoDatabase = new VideoDatabase()
-       
+                
            // Buscando o vídeo no banco de dados com o id fornecido via params
-           const videoDB = await videoDatabase.findVideoById(idToEdit)
+           const videoDB = await this.videoDatabase.findVideoById(idToEdit)
        
            // Verificando se o vídeo foi encontrado no banco de dados
            if (!videoDB) {
@@ -121,7 +126,7 @@ export class VideoBusiness {
            }
        
            // Atualizando as informações do vídeo no banco de dados
-           await videoDatabase.updateVideo(idToEdit)
+           await this.videoDatabase.updateVideo(idToEdit)
 
           
            const output: EditVideoOutputDTO= {
@@ -157,11 +162,7 @@ export class VideoBusiness {
            }
         return output
      }      
-   
-    
-
-
-}
+   }
      
 // 1. index chama userController.getUsers
 // 2. Na controller os dados são recebidos e chama a userBusiness.getUsers(input)

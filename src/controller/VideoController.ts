@@ -7,7 +7,13 @@ import { ReadVideoSchema } from "../dtos/readVideo.dto";
 import { DeleteVideoSchema } from "../dtos/deleteVideo.dto";
 
 
+
 export class VideosController {
+
+  //intetando depedências
+  constructor(
+    private videoBusiness: VideoBusiness
+  ){}
 
 
   getPing = async (req: Request, res: Response) => {
@@ -33,8 +39,8 @@ export class VideosController {
       const input = ReadVideoSchema.parse({
         q: req.query.q
       })
-      const videoBusiness = new VideoBusiness()
-      const output = await videoBusiness.getVideos(input)
+
+      const output = await this.videoBusiness.getVideos(input)
 
       res.status(200).send(output)
 
@@ -67,8 +73,8 @@ export class VideosController {
       })
       // a partir dessa linha temos certeza de que:
       // o dado recebido (input) está no formato esperado (CreateVideoInputDTO)
-      const videoBusiness = new VideoBusiness
-      const output = await videoBusiness.createVideo(input)
+
+      const output = await this.videoBusiness.createVideo(input)
 
 
       res.status(201).send(output.message)
@@ -93,7 +99,7 @@ export class VideosController {
   updateVideo = async (req: Request, res: Response) => {
     try {
       const idToEdit = req.params.id
-      const { id, title, duration, uploadedAt } = req.body
+      const { id, title, duration } = req.body
 
       const input = EditProductSchema.parse({
         idToEdit,
@@ -102,8 +108,8 @@ export class VideosController {
         duration,
       })       
 
-      const videoBusiness = new VideoBusiness()
-      const output = await videoBusiness.updateVideo(input)
+
+      const output = await this.videoBusiness.updateVideo(input)
 
       // Enviando uma resposta de sucesso (status 200) com o vídeo atualizado
       res.status(200).send({ message: output.message, video: output.video })
@@ -115,13 +121,14 @@ export class VideosController {
         res.status(500)
       }
 
-      // Tratamento de erros - se o erro for uma instância de 'Error', envia a mensagem de erro associada
-      if (error instanceof Error) {
-        res.send(error.message)
-      } else {
-        // Caso contrário, envia uma mensagem genérica de erro
-        res.send("Erro inesperado")
-      }
+      if (error instanceof ZodError) {
+        res.status(400).send(error.issues)
+        } 
+        else if (error instanceof Error) {
+          res.send(error.message)
+            } else {
+              res.send("Erro inesperado")
+              }
     }
   }
 
@@ -134,8 +141,7 @@ export class VideosController {
         id: req.params.id
       })
 
-      const videoBusiness = new VideoBusiness()
-      const output = await videoBusiness.deleteVideo(input)
+      const output = await this.videoBusiness.deleteVideo(input)
 
       res.status(200).send(output.message)
     } catch (error) {
