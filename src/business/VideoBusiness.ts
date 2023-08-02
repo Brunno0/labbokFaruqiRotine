@@ -1,15 +1,24 @@
-import { throws } from "assert"
 import { VideoDatabase } from "../database/VideoDatabase"
 import { Video } from "../models/Video"
 import { TVideoDB } from "../types"
 import { BadRequestError } from "../errors/BadRequestError"
+import { CreateVideoInputDTO, CreateVideoOutputDTO } from "../dtos/createVideo.dto"
+import { EditVideoInputDTO, EditVideoOutputDTO } from "../dtos/editVideo.dto"
+import { DeleteVideoInputDTO, DeleteVideoOutputDTO } from "../dtos/deleteVideo.dto"
+import { ReadVideoInputDTO, ReadVideoOutputDTO } from "../dtos/readVideo.dto"
 
 export class VideoBusiness {
-    getVideos =async (input:any) => {
+
+    constructor(
+      private videoDatabase = new VideoDatabase
+    ){}
+
+
+    getVideos = async (input:ReadVideoInputDTO) => {
         const {q} = input
    
-        const database = new VideoDatabase()
-        const videosDB = await database.findVideos(q)
+        
+        const videosDB = await this.videoDatabase.findVideos(q)
         
         const videos: Video[] = videosDB.map(
           (element) =>
@@ -20,28 +29,20 @@ export class VideoBusiness {
               element.uploaded_at
             )
         )
-            return videos
+
+        const output:ReadVideoOutputDTO = {
+          message:"Busca realizada com sucesso",
+          result: videos
+        }
+            return output
 
     }
-    createVideo = async (input:any) => {
+    createVideo = async (input:CreateVideoInputDTO): Promise<CreateVideoOutputDTO> => {
 
         const { id, title, duration } = input
 
-        if (typeof id !== "string") {
-           throw new BadRequestError()
-          }
-      
-          if (typeof title !== "string") {
-            throw new BadRequestError("'title'deve ser string")
-          }
-      
-          if (typeof duration !== "number") {
-            throw new BadRequestError()
-          }
-      
-          const videoDatabase = new VideoDatabase()
-      
-          const videoDBExists = await videoDatabase.findVideoById(id)
+        
+          const videoDBExists = await this.videoDatabase.findVideoById(id)
       
           if (videoDBExists) {
              throw new BadRequestError("Vídeo já cadastrado")
@@ -61,56 +62,41 @@ export class VideoBusiness {
             uploaded_at: newVideo.getUploadedAt()
           }
       
-          await videoDatabase.insertVideo(newVideoDB)
+          await this.videoDatabase.insertVideo(newVideoDB)
 
-          const output ={
-            massage:"Cadastrado com sucesso"
+          // Formatamos o output do vídeo seguindo a assinatura do CreateVideoOutputDTO
+          const output: CreateVideoOutputDTO = {
+            message:"Cadastrado com sucesso",
+              video:{
+              id: newVideo.getId(),
+              title: newVideo.getTitle(),
+              duration: newVideo.getDuration(),
+            }
           }
 
           return output
 
     }
-    updateVideo = async (input:any, idToEdit:any)=>{
+    updateVideo = async (input:EditVideoInputDTO): Promise<EditVideoOutputDTO>=>{
            //Recebendo valores da idToEdit e body
-           const {id, title,duration,uploadedAt} = input
+           const {idToEdit,id, title,duration} = input
 
-            // Validando o campo 'id'
-           if (id !== undefined) {
-             if (typeof id !== "string") {
-            
-               throw new Error("'id' deve ser string")
-             }
-           }
-       
-           // Validando o campo 'title'
-           if (title !== undefined) {
-             if (typeof title !== "string") {
-             
-               throw new Error("'title' deve ser string")
-             }
-           }
-       
-           // Validando o campo 'duration'
-           if (duration !== undefined) {
-             if (typeof duration !== "number") {
-       
-               throw new Error("'duration' deve ser number")
-             }
-           }
-       
+           // Não faz sentido alterar a data de upload. Um vídeo não pode trocar data de up
+           // ou pode? por enquanto não. heheh 
+
            // Validando o campo 'uploadedAt'
-           if (uploadedAt !== undefined) {
-             if (typeof uploadedAt !== "string") {
+           //
+          //  if (uploadedAt !== undefined) {
+          //    if (typeof uploadedAt !== "string") {
       
-               throw new Error("'uploadedAt' deve ser string")
-             }
-           }
+          //      throw new Error("'uploadedAt' deve ser string")
+          //    }
+          //  }
        
            // Instanciando um objeto da classe 'VideoDatabase'
-           const videoDatabase = new VideoDatabase()
-       
+                
            // Buscando o vídeo no banco de dados com o id fornecido via params
-           const videoDB = await videoDatabase.findVideoById(idToEdit)
+           const videoDB = await this.videoDatabase.findVideoById(idToEdit)
        
            // Verificando se o vídeo foi encontrado no banco de dados
            if (!videoDB) {
@@ -129,10 +115,8 @@ export class VideoBusiness {
            id && video.setId(id)
            title && video.setTitle(title)
            duration && video.setDuration(duration)
-           uploadedAt && video.setUploadedAt(uploadedAt)
-            
-          
 
+              
            // Criando um objeto 'updatedVideoDB' com os dados atualizados do vídeo
            const updatedVideoDB: TVideoDB = {
              id: video.getId(),
@@ -142,27 +126,27 @@ export class VideoBusiness {
            }
        
            // Atualizando as informações do vídeo no banco de dados
-           await videoDatabase.updateVideo(idToEdit)
+           await this.videoDatabase.updateVideo(idToEdit)
 
-           const output= {
+          
+           const output: EditVideoOutputDTO= {
+
             message: "Atuzalizado com sucesso",
-            video
+            video:{
+              id: video.getId(),
+              title: video.getTitle(),
+              duration: video.getDuration(),
+              uplodatedAt: video.getUploadedAt()
+            }
         }
 
             return output;
 
     }
     //POST
-    deleteVideo =  async (input:any) => {
+    deleteVideo =  async (input:DeleteVideoInputDTO):Promise<DeleteVideoOutputDTO> => {
 
         const { id } = input
-
-        if (!id) {
-            throw new Error("'id' não informada")
-        }
-        if (typeof id !== "string") {
-            throw new Error("'id' precisa ser uma string")
-        }
 
         const videoDatabase = new VideoDatabase()
         const videToDeleteDB = await videoDatabase.findVideoById(id)
@@ -178,11 +162,7 @@ export class VideoBusiness {
            }
         return output
      }      
-   
-    
-
-
-}
+   }
      
 // 1. index chama userController.getUsers
 // 2. Na controller os dados são recebidos e chama a userBusiness.getUsers(input)
