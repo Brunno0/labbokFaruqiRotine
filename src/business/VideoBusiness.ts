@@ -4,9 +4,11 @@ import { TVideoDB } from "../types"
 import { BadRequestError } from "../errors/BadRequestError"
 import { CreateVideoInputDTO, CreateVideoOutputDTO } from "../dtos/createVideo.dto"
 import { EditVideoInputDTO, EditVideoOutputDTO } from "../dtos/editVideo.dto"
+import { DeleteVideoInputDTO, DeleteVideoOutputDTO } from "../dtos/deleteVideo.dto"
+import { ReadVideoInputDTO, ReadVideoOutputDTO } from "../dtos/readVideo.dto"
 
 export class VideoBusiness {
-    getVideos =async (input:any) => {
+    getVideos =async (input:ReadVideoInputDTO) => {
         const {q} = input
    
         const database = new VideoDatabase()
@@ -21,7 +23,12 @@ export class VideoBusiness {
               element.uploaded_at
             )
         )
-            return videos
+
+        const output:ReadVideoOutputDTO = {
+          message:"Busca realizada com sucesso",
+          result: videos
+        }
+            return output
 
     }
     createVideo = async (input:CreateVideoInputDTO): Promise<CreateVideoOutputDTO> => {
@@ -64,7 +71,7 @@ export class VideoBusiness {
           return output
 
     }
-    updateVideo = async (input: EditVideoInputDTO): Promise<EditVideoOutputDTO>=>{
+    updateVideo = async (input:EditVideoInputDTO): Promise<EditVideoOutputDTO>=>{
            //Recebendo valores da idToEdit e body
            const {idToEdit,id, title,duration} = input
 
@@ -132,16 +139,9 @@ export class VideoBusiness {
 
     }
     //POST
-    deleteVideo =  async (input:any) => {
+    deleteVideo =  async (input:DeleteVideoInputDTO):Promise<DeleteVideoOutputDTO> => {
 
         const { id } = input
-
-        if (!id) {
-            throw new Error("'id' não informada")
-        }
-        if (typeof id !== "string") {
-            throw new Error("'id' precisa ser uma string")
-        }
 
         const videoDatabase = new VideoDatabase()
         const videToDeleteDB = await videoDatabase.findVideoById(id)

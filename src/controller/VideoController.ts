@@ -3,6 +3,8 @@ import { ZodError } from 'zod';
 import { VideoBusiness } from "../business/VideoBusiness"
 import { CreateVideoSchema } from "../dtos/createVideo.dto"
 import { EditProductSchema } from "../dtos/editVideo.dto";
+import { ReadVideoSchema } from "../dtos/readVideo.dto";
+import { DeleteVideoSchema } from "../dtos/deleteVideo.dto";
 
 
 export class VideosController {
@@ -28,9 +30,9 @@ export class VideosController {
 
   getVideos = async (req: Request, res: Response): Promise<void> => {
     try {
-      const input = {
+      const input = ReadVideoSchema.parse({
         q: req.query.q
-      }
+      })
       const videoBusiness = new VideoBusiness()
       const output = await videoBusiness.getVideos(input)
 
@@ -43,11 +45,14 @@ export class VideosController {
         res.status(500)
       }
 
-      if (error instanceof Error) {
-        res.send(error.message)
-      } else {
-        res.send("Unexpected Error")
-      }
+      if (error instanceof ZodError) {
+        res.status(400).send(error.issues)
+        } 
+        else if (error instanceof Error) {
+          res.send(error.message)
+            } else {
+              res.send("Erro inesperado")
+              }
     }
   }
 
@@ -121,13 +126,13 @@ export class VideosController {
   }
 
 
-  // não vou fazer um DTO apenas para ID :D 
+  // Acabei Fazendo  
   // se me cobrarem eu faço, RH da empresa me liga kkkk 
   deleteVideo = async (req: Request, res: Response) => {
     try {
-      const input = {
+      const input = DeleteVideoSchema.parse( {
         id: req.params.id
-      }
+      })
 
       const videoBusiness = new VideoBusiness()
       const output = await videoBusiness.deleteVideo(input)
@@ -142,12 +147,14 @@ export class VideosController {
       }
 
       // Tratamento de erros - se o erro for uma instância de 'Error', envia a mensagem de erro associada
-      if (error instanceof Error) {
-        res.send(error.message)
-      } else {
-        // Caso contrário, envia uma mensagem genérica de erro
-        res.send("Erro inesperado")
-      }
+      if (error instanceof ZodError) {
+        res.status(400).send(error.issues)
+        } 
+        else if (error instanceof Error) {
+          res.send(error.message)
+            } else {
+              res.send("Erro inesperado")
+              }
     }
   }
 
